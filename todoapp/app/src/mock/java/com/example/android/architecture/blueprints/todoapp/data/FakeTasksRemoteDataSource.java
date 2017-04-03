@@ -26,24 +26,17 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 /**
  * Implementation of a remote data source with static access to the data for easy testing.
  */
 public class FakeTasksRemoteDataSource implements TasksDataSource {
 
-    private static FakeTasksRemoteDataSource INSTANCE;
-
     private static final Map<String, Task> TASKS_SERVICE_DATA = new LinkedHashMap<>();
 
-    // Prevent direct instantiation.
-    private FakeTasksRemoteDataSource() {}
-
-    public static FakeTasksRemoteDataSource getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new FakeTasksRemoteDataSource();
-        }
-        return INSTANCE;
-    }
+    @Inject
+    public FakeTasksRemoteDataSource() {}
 
     @Override
     public void getTasks(@NonNull LoadTasksCallback callback) {

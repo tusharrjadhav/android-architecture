@@ -43,6 +43,5 @@ public interface AddEditTaskContract {
 
         void populateTask();
 
-        boolean isDataMissing();
     }
 }

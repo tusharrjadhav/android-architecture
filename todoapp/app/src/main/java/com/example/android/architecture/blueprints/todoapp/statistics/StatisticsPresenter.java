@@ -16,8 +16,6 @@
 
 package com.example.android.architecture.blueprints.todoapp.statistics;
 
-import android.support.annotation.NonNull;
-
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
@@ -25,7 +23,7 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Inject;
 
 /**
  * Listens to user actions from the UI ({@link StatisticsFragment}), retrieves the data and updates
@@ -37,10 +35,11 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
 
     private final StatisticsContract.View mStatisticsView;
 
-    public StatisticsPresenter(@NonNull TasksRepository tasksRepository,
-                               @NonNull StatisticsContract.View statisticsView) {
-        mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null");
-        mStatisticsView = checkNotNull(statisticsView, "StatisticsView cannot be null!");
+    @Inject
+    StatisticsPresenter(TasksRepository tasksRepository,
+                               StatisticsContract.View statisticsView) {
+        mTasksRepository = tasksRepository;
+        mStatisticsView = statisticsView;
 
         mStatisticsView.setPresenter(this);
     }

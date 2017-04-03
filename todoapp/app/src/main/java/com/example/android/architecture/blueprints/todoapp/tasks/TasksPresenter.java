@@ -28,6 +28,8 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -44,9 +46,10 @@ public class TasksPresenter implements TasksContract.Presenter {
 
     private boolean mFirstLoad = true;
 
-    public TasksPresenter(@NonNull TasksRepository tasksRepository, @NonNull TasksContract.View tasksView) {
-        mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null");
-        mTasksView = checkNotNull(tasksView, "tasksView cannot be null!");
+    @Inject
+    public TasksPresenter(TasksRepository tasksRepository, TasksContract.View tasksView) {
+        mTasksRepository = tasksRepository;
+        mTasksView = tasksView;
 
         mTasksView.setPresenter(this);
     }

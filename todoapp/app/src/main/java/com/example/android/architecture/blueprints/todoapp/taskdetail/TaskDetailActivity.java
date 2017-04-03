@@ -17,16 +17,15 @@
 package com.example.android.architecture.blueprints.todoapp.taskdetail;
 
 import android.os.Bundle;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
-import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import javax.inject.Inject;
 
 /**
  * Displays task details screen.
@@ -34,6 +33,9 @@ import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingRe
 public class TaskDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_TASK_ID = "TASK_ID";
+
+    @Inject
+    TaskDetailPresenter taskDetailPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +64,12 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
 
         // Create the presenter
-        new TaskDetailPresenter(
-                taskId,
-                Injection.provideTasksRepository(getApplicationContext()),
-                taskDetailFragment);
+        DaggerTaskDetailComponent.builder()
+                .tasksRepositoryComponent(((ToDoApplication)getApplication()).getTasksRepositoryComponent())
+                .taskDetailPresenterModule(new TaskDetailPresenterModule(taskDetailFragment, taskId))
+                .build()
+                .inject(this);
+
     }
 
     @Override

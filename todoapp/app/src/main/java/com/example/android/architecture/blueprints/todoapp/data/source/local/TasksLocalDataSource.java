@@ -22,6 +22,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
 
+import com.example.android.architecture.blueprints.todoapp.ApplicationScope;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksPersistenceContract.TaskEntry;
@@ -29,29 +30,22 @@ import com.example.android.architecture.blueprints.todoapp.data.source.local.Tas
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 
 /**
  * Concrete implementation of a data source as a db.
  */
+@ApplicationScope
 public class TasksLocalDataSource implements TasksDataSource {
-
-    private static TasksLocalDataSource INSTANCE;
 
     private TasksDbHelper mDbHelper;
 
-    // Prevent direct instantiation.
-    private TasksLocalDataSource(@NonNull Context context) {
-        checkNotNull(context);
+    @Inject
+    public TasksLocalDataSource(Context context) {
         mDbHelper = new TasksDbHelper(context);
-    }
-
-    public static TasksLocalDataSource getInstance(@NonNull Context context) {
-        if (INSTANCE == null) {
-            INSTANCE = new TasksLocalDataSource(context);
-        }
-        return INSTANCE;
     }
 
     /**

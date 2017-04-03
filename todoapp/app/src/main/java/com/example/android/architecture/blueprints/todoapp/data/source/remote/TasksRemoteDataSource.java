@@ -19,6 +19,7 @@ package com.example.android.architecture.blueprints.todoapp.data.source.remote;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 
+import com.example.android.architecture.blueprints.todoapp.ApplicationScope;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.google.common.collect.Lists;
@@ -30,9 +31,8 @@ import java.util.Map;
 /**
  * Implementation of the data source that adds a latency simulating network.
  */
+@ApplicationScope
 public class TasksRemoteDataSource implements TasksDataSource {
-
-    private static TasksRemoteDataSource INSTANCE;
 
     private static final int SERVICE_LATENCY_IN_MILLIS = 5000;
 
@@ -44,15 +44,7 @@ public class TasksRemoteDataSource implements TasksDataSource {
         addTask("Finish bridge in Tacoma", "Found awesome girders at half the cost!");
     }
 
-    public static TasksRemoteDataSource getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new TasksRemoteDataSource();
-        }
-        return INSTANCE;
-    }
-
-    // Prevent direct instantiation.
-    private TasksRemoteDataSource() {}
+    public TasksRemoteDataSource() {}
 
     private static void addTask(String title, String description) {
         Task newTask = new Task(title, description);

@@ -24,7 +24,7 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksData
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.google.common.base.Strings;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.inject.Inject;
 
 /**
  * Listens to user actions from the UI ({@link TaskDetailFragment}), retrieves the data and updates
@@ -39,12 +39,13 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
     @Nullable
     private String mTaskId;
 
-    public TaskDetailPresenter(@Nullable String taskId,
-                               @NonNull TasksRepository tasksRepository,
-                               @NonNull TaskDetailContract.View taskDetailView) {
+    @Inject
+    TaskDetailPresenter(@Nullable String taskId,
+                               TasksRepository tasksRepository,
+                               TaskDetailContract.View taskDetailView) {
         mTaskId = taskId;
-        mTasksRepository = checkNotNull(tasksRepository, "tasksRepository cannot be null!");
-        mTaskDetailView = checkNotNull(taskDetailView, "taskDetailView cannot be null!");
+        mTasksRepository = tasksRepository;
+        mTaskDetailView = taskDetailView;
 
         mTaskDetailView.setPresenter(this);
     }

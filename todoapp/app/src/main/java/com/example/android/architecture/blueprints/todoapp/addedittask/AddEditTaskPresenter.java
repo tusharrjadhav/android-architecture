@@ -21,14 +21,26 @@ import android.support.annotation.Nullable;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
+import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+
+import javax.inject.Inject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and updates
+ * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and
+ * updates
  * the UI as required.
+ * <p />
+ * By marking the constructor with {@code @Inject}, Dagger injects the dependencies required to
+ * create an instance of the AddEditTaskPresenter (if it fails, it emits a compiler error). It uses
+ * {@link AddEditTaskPresenterModule} to do so.
+ * <p/>
+ * Dagger generated code doesn't require public access to the constructor or class, and
+ * therefore, to ensure the developer doesn't instantiate the class manually bypassing Dagger,
+ * it's good practice minimise the visibility of the class/constructor as much as possible.
  */
-public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
+final class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
         TasksDataSource.GetTaskCallback {
 
     @NonNull
@@ -40,27 +52,24 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
     @Nullable
     private String mTaskId;
 
-    private boolean mIsDataMissing;
 
     /**
      * Creates a presenter for the add/edit view.
-     *
-     * @param taskId ID of the task to edit or null for a new task
+     *  @param taskId ID of the task to edit or null for a new task
      * @param tasksRepository a repository of data for tasks
      * @param addTaskView the add/edit view
-     * @param shouldLoadDataFromRepo whether data needs to be loaded or not (for config changes)
      */
-    public AddEditTaskPresenter(@Nullable String taskId, @NonNull TasksDataSource tasksRepository,
-            @NonNull AddEditTaskContract.View addTaskView, boolean shouldLoadDataFromRepo) {
+    @Inject
+    public AddEditTaskPresenter(@Nullable String taskId, TasksRepository tasksRepository,
+                         AddEditTaskContract.View addTaskView) {
         mTaskId = taskId;
         mTasksRepository = checkNotNull(tasksRepository);
         mAddTaskView = checkNotNull(addTaskView);
-        mIsDataMissing = shouldLoadDataFromRepo;
     }
 
     @Override
     public void start() {
-        if (!isNewTask() && mIsDataMissing) {
+        if (!isNewTask()) {
             populateTask();
         }
     }
@@ -89,7 +98,6 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
             mAddTaskView.setTitle(task.getTitle());
             mAddTaskView.setDescription(task.getDescription());
         }
-        mIsDataMissing = false;
     }
 
     @Override
@@ -98,11 +106,6 @@ public class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
         if (mAddTaskView.isActive()) {
             mAddTaskView.showEmptyTaskError();
         }
-    }
-
-    @Override
-    public boolean isDataMissing() {
-        return mIsDataMissing;
     }
 
     private boolean isNewTask() {

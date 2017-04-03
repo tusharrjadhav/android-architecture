@@ -16,11 +16,10 @@
 
 package com.example.android.architecture.blueprints.todoapp.data.source;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.example.android.architecture.blueprints.todoapp.ApplicationScope;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 
 import java.util.ArrayList;
@@ -29,6 +28,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Concrete implementation to load tasks from the data sources into a cache.
  * <p>
@@ -36,9 +39,8 @@ import java.util.Map;
  * obtained from the server, by using the remote data source only if the local database doesn't
  * exist or is empty.
  */
+@ApplicationScope
 public class TasksRepository implements TasksDataSource {
-
-    private static TasksRepository INSTANCE = null;
 
     private final TasksDataSource mTasksRemoteDataSource;
 
@@ -55,35 +57,13 @@ public class TasksRepository implements TasksDataSource {
      */
     boolean mCacheIsDirty = false;
 
-    // Prevent direct instantiation.
-    private TasksRepository(@NonNull TasksDataSource tasksRemoteDataSource,
-                            @NonNull TasksDataSource tasksLocalDataSource) {
-        mTasksRemoteDataSource = checkNotNull(tasksRemoteDataSource);
-        mTasksLocalDataSource = checkNotNull(tasksLocalDataSource);
+    @Inject
+    public TasksRepository(@Remote TasksDataSource tasksRemoteDataSource,
+                    @Local TasksDataSource tasksLocalDataSource) {
+        mTasksRemoteDataSource = tasksRemoteDataSource;
+        mTasksLocalDataSource = tasksLocalDataSource;
     }
 
-    /**
-     * Returns the single instance of this class, creating it if necessary.
-     *
-     * @param tasksRemoteDataSource the backend data source
-     * @param tasksLocalDataSource  the device storage data source
-     * @return the {@link TasksRepository} instance
-     */
-    public static TasksRepository getInstance(TasksDataSource tasksRemoteDataSource,
-                                              TasksDataSource tasksLocalDataSource) {
-        if (INSTANCE == null) {
-            INSTANCE = new TasksRepository(tasksRemoteDataSource, tasksLocalDataSource);
-        }
-        return INSTANCE;
-    }
-
-    /**
-     * Used to force {@link #getInstance(TasksDataSource, TasksDataSource)} to create a new instance
-     * next time it's called.
-     */
-    public static void destroyInstance() {
-        INSTANCE = null;
-    }
 
     /**
      * Gets tasks from cache, local data source (SQLite) or remote data source, whichever is

@@ -28,11 +28,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import com.example.android.architecture.blueprints.todoapp.Injection;
 import com.example.android.architecture.blueprints.todoapp.R;
+import com.example.android.architecture.blueprints.todoapp.ToDoApplication;
 import com.example.android.architecture.blueprints.todoapp.statistics.StatisticsActivity;
 import com.example.android.architecture.blueprints.todoapp.util.ActivityUtils;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+
+import javax.inject.Inject;
 
 public class TasksActivity extends AppCompatActivity {
 
@@ -40,7 +42,7 @@ public class TasksActivity extends AppCompatActivity {
 
     private DrawerLayout mDrawerLayout;
 
-    private TasksPresenter mTasksPresenter;
+    @Inject TasksPresenter mTasksPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,8 +74,11 @@ public class TasksActivity extends AppCompatActivity {
         }
 
         // Create the presenter
-        mTasksPresenter = new TasksPresenter(
-                Injection.provideTasksRepository(getApplicationContext()), tasksFragment);
+        DaggerTasksComponent.builder()
+                .tasksRepositoryComponent(((ToDoApplication) getApplication()).getTasksRepositoryComponent())
+                .tasksPresenterModule(new TasksPresenterModule(tasksFragment))
+                .build()
+                .inject(this);
 
         // Load previously saved state, if available.
         if (savedInstanceState != null) {
@@ -113,6 +118,8 @@ public class TasksActivity extends AppCompatActivity {
                             case R.id.statistics_navigation_menu_item:
                                 Intent intent =
                                         new Intent(TasksActivity.this, StatisticsActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                                 startActivity(intent);
                                 break;
                             default:
