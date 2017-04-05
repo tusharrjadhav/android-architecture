@@ -27,8 +27,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
@@ -68,7 +66,7 @@ public class AddEditTaskPresenterTest {
     public void saveNewTaskToRepository_showsSuccessMessageUi() {
         // Get a reference to the class under test
         mAddEditTaskPresenter = new AddEditTaskPresenter(
-                null, mTasksRepository, mAddEditTaskView, true);
+                null, mTasksRepository, mAddEditTaskView);
 
         // When the presenter is asked to save a task
         mAddEditTaskPresenter.saveTask("New Task Title", "Some Task Description");
@@ -82,7 +80,7 @@ public class AddEditTaskPresenterTest {
     public void saveTask_emptyTaskShowsErrorUi() {
         // Get a reference to the class under test
         mAddEditTaskPresenter = new AddEditTaskPresenter(
-                null, mTasksRepository, mAddEditTaskView, true);
+                null, mTasksRepository, mAddEditTaskView);
 
         // When the presenter is asked to save an empty task
         mAddEditTaskPresenter.saveTask("", "");
@@ -95,7 +93,7 @@ public class AddEditTaskPresenterTest {
     public void saveExistingTaskToRepository_showsSuccessMessageUi() {
         // Get a reference to the class under test
         mAddEditTaskPresenter = new AddEditTaskPresenter(
-                "1", mTasksRepository, mAddEditTaskView, true);
+                "1", mTasksRepository, mAddEditTaskView);
 
         // When the presenter is asked to save an existing task
         mAddEditTaskPresenter.saveTask("Existing Task Title", "Some Task Description");
@@ -110,20 +108,18 @@ public class AddEditTaskPresenterTest {
         Task testTask = new Task("TITLE", "DESCRIPTION");
         // Get a reference to the class under test
         mAddEditTaskPresenter = new AddEditTaskPresenter(testTask.getId(),
-                mTasksRepository, mAddEditTaskView, true);
+                mTasksRepository, mAddEditTaskView);
 
         // When the presenter is asked to populate an existing task
         mAddEditTaskPresenter.populateTask();
 
         // Then the task repository is queried and the view updated
         verify(mTasksRepository).getTask(eq(testTask.getId()), mGetTaskCallbackCaptor.capture());
-        assertThat(mAddEditTaskPresenter.isDataMissing(), is(true));
 
         // Simulate callback
         mGetTaskCallbackCaptor.getValue().onTaskLoaded(testTask);
 
         verify(mAddEditTaskView).setTitle(testTask.getTitle());
         verify(mAddEditTaskView).setDescription(testTask.getDescription());
-        assertThat(mAddEditTaskPresenter.isDataMissing(), is(false));
     }
 }

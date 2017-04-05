@@ -14,7 +14,7 @@ import dagger.Provides;
  */
 
 @Module
-public class TaskRepositoryModule {
+public class TasksRepositoryModule {
 
     @ApplicationScope
     @Provides
