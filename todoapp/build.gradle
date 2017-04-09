@@ -3,7 +3,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0'
+        classpath 'com.android.tools.build:gradle:2.3.1'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -39,4 +39,7 @@ ext {
     rulesVersion = '0.5'
     espressoVersion = '2.2.2'
     daggerVersion = '2.9'
+    rxjavaVersion = '1.1.8'
+    rxandroidVersion = '1.2.1'
+    sqlbriteVersion = '1.1.1'
 }

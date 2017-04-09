@@ -69,6 +69,34 @@ public class AddEditTaskScreenTest {
     public ActivityTestRule<AddEditTaskActivity> mActivityTestRule =
             new ActivityTestRule<>(AddEditTaskActivity.class, false, false);
 
+    /**
+     * Matches the toolbar title with a specific string resource.
+     *
+     * @param resourceId the ID of the string resource to match
+     */
+    public static Matcher<View> withToolbarTitle(final int resourceId) {
+        return new BoundedMatcher<View, Toolbar>(Toolbar.class) {
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("with toolbar title from resource id: ");
+                description.appendValue(resourceId);
+            }
+
+            @Override
+            protected boolean matchesSafely(Toolbar toolbar) {
+                CharSequence expectedText = "";
+                try {
+                    expectedText = toolbar.getResources().getString(resourceId);
+                } catch (Resources.NotFoundException ignored) {
+                    /* view could be from a context unaware of the resource id. */
+                }
+                CharSequence actualText = toolbar.getTitle();
+                return expectedText.equals(actualText);
+            }
+        };
+    }
+
     @Test
     public void emptyTask_isNotSaved() {
         // Launch activity to add a new task
@@ -101,7 +129,7 @@ public class AddEditTaskScreenTest {
 
     @Test
     public void toolbarTitle_editTask_persistsRotation() {
-        // Put a task in the repository and start the activity to edit it
+        // Put a task in the repository and subscribe the activity to edit it
         TasksRepository.destroyInstance();
         FakeTasksRemoteDataSource.getInstance().addTasks(new Task("Title1", "", TASK_ID, false));
         launchNewTaskActivity(TASK_ID);
@@ -125,33 +153,5 @@ public class AddEditTaskScreenTest {
 
         intent.putExtra(AddEditTaskFragment.ARGUMENT_EDIT_TASK_ID, taskId);
         mActivityTestRule.launchActivity(intent);
-    }
-
-    /**
-     * Matches the toolbar title with a specific string resource.
-     *
-     * @param resourceId the ID of the string resource to match
-     */
-    public static Matcher<View> withToolbarTitle(final int resourceId) {
-        return new BoundedMatcher<View, Toolbar>(Toolbar.class) {
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("with toolbar title from resource id: ");
-                description.appendValue(resourceId);
-            }
-
-            @Override
-            protected boolean matchesSafely(Toolbar toolbar) {
-                CharSequence expectedText = "";
-                try {
-                    expectedText = toolbar.getResources().getString(resourceId);
-                } catch (Resources.NotFoundException ignored) {
-                    /* view could be from a context unaware of the resource id. */
-                }
-                CharSequence actualText = toolbar.getTitle();
-                return expectedText.equals(actualText);
-            }
-        };
     }
 }

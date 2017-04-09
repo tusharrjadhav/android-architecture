@@ -16,14 +16,20 @@
 
 package com.example.android.architecture.blueprints.todoapp.statistics;
 
+import android.support.annotation.NonNull;
+import android.support.v4.util.Pair;
+
 import com.example.android.architecture.blueprints.todoapp.data.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
-
-import java.util.List;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
 
 import javax.inject.Inject;
+
+import rx.Observable;
+import rx.Subscription;
+import rx.subscriptions.CompositeSubscription;
 
 /**
  * Listens to user actions from the UI ({@link StatisticsFragment}), retrieves the data and updates
@@ -35,18 +41,31 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
 
     private final StatisticsContract.View mStatisticsView;
 
+    @NonNull
+    private final BaseSchedulerProvider mSchedulerProvider;
+
+    @NonNull
+    private CompositeSubscription mSubscriptions;
+
     @Inject
     StatisticsPresenter(TasksRepository tasksRepository,
-                               StatisticsContract.View statisticsView) {
+                        StatisticsContract.View statisticsView, SchedulerProvider schedulerProvider, @NonNull CompositeSubscription mSubscriptions) {
         mTasksRepository = tasksRepository;
         mStatisticsView = statisticsView;
+        this.mSubscriptions = mSubscriptions;
 
         mStatisticsView.setPresenter(this);
+        mSchedulerProvider = schedulerProvider;
     }
 
     @Override
-    public void start() {
+    public void subscribe() {
         loadStatistics();
+    }
+
+    @Override
+    public void unsubscribe() {
+        mSubscriptions.clear();
     }
 
     private void loadStatistics() {
@@ -56,44 +75,27 @@ public class StatisticsPresenter implements StatisticsContract.Presenter {
         // that the app is busy until the response is handled.
         EspressoIdlingResource.increment(); // App is busy until further notice
 
-        mTasksRepository.getTasks(new TasksDataSource.LoadTasksCallback() {
-            @Override
-            public void onTasksLoaded(List<Task> tasks) {
-                int activeTasks = 0;
-                int completedTasks = 0;
-
-                // This callback may be called twice, once for the cache and once for loading
-                // the data from the server API, so we check before decrementing, otherwise
-                // it throws "Counter has been corrupted!" exception.
-                if (!EspressoIdlingResource.getIdlingResource().isIdleNow()) {
-                    EspressoIdlingResource.decrement(); // Set app as idle.
-                }
-
-                // We calculate number of active and completed tasks
-                for (Task task : tasks) {
-                    if (task.isCompleted()) {
-                        completedTasks += 1;
-                    } else {
-                        activeTasks += 1;
+        Observable<Task> tasks = mTasksRepository
+                .getTasks()
+                .flatMap(Observable::from);
+        Observable<Integer> completedTasks = tasks.filter(Task::isCompleted).count();
+        Observable<Integer> activeTasks = tasks.filter(Task::isActive).count();
+        Subscription subscription = Observable.zip(completedTasks, activeTasks, (completed, active) -> Pair.create(completed, active))
+                .subscribeOn(mSchedulerProvider.computation())
+                .observeOn(mSchedulerProvider.ui())
+                .doOnTerminate(() -> {
+                    if (!EspressoIdlingResource.getIdlingResource().isIdleNow()) {
+                        EspressoIdlingResource.decrement(); // Set app as idle.
                     }
-                }
-                // The view may not be able to handle UI updates anymore
-                if (!mStatisticsView.isActive()) {
-                    return;
-                }
-                mStatisticsView.setProgressIndicator(false);
-
-                mStatisticsView.showStatistics(activeTasks, completedTasks);
-            }
-
-            @Override
-            public void onDataNotAvailable() {
-                // The view may not be able to handle UI updates anymore
-                if (!mStatisticsView.isActive()) {
-                    return;
-                }
-                mStatisticsView.showLoadingStatisticsError();
-            }
-        });
+                })
+                .subscribe(
+                        //onNext
+                        stats -> mStatisticsView.showStatistics(stats.second, stats.first),
+                        //onError
+                        throwable -> mStatisticsView.showLoadingStatisticsError(),
+                        //onCompleted
+                        () -> mStatisticsView.setProgressIndicator(false)
+                );
+        mSubscriptions.add(subscription);
     }
 }

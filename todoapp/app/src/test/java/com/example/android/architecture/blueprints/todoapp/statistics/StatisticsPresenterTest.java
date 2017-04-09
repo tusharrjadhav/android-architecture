@@ -21,14 +21,14 @@ import com.example.android.architecture.blueprints.todoapp.data.source.TasksData
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.google.common.collect.Lists;
 
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.List;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,12 +63,12 @@ public class StatisticsPresenterTest {
         MockitoAnnotations.initMocks(this);
 
         // Get a reference to the class under test
-        mStatisticsPresenter = new StatisticsPresenter(mTasksRepository, mStatisticsView);
+        mStatisticsPresenter = new StatisticsPresenter(mTasksRepository, mStatisticsView, , mSubscriptions);
 
         // The presenter won't update the view unless it's active.
         when(mStatisticsView.isActive()).thenReturn(true);
 
-        // We start the tasks to 3, with one active and two completed
+        // We subscribe the tasks to 3, with one active and two completed
         TASKS = Lists.newArrayList(new Task("Title1", "Description1"),
                 new Task("Title2", "Description2", true), new Task("Title3", "Description3", true));
     }
@@ -79,7 +79,7 @@ public class StatisticsPresenterTest {
         TASKS.clear();
 
         // When loading of Tasks is requested
-        mStatisticsPresenter.start();
+        mStatisticsPresenter.subscribe();
 
         //Then progress indicator is shown
         verify(mStatisticsView).setProgressIndicator(true);
@@ -98,7 +98,7 @@ public class StatisticsPresenterTest {
         // Given an initialized StatisticsPresenter with 1 active and 2 completed tasks
 
         // When loading of Tasks is requested
-        mStatisticsPresenter.start();
+        mStatisticsPresenter.subscribe();
 
         //Then progress indicator is shown
         verify(mStatisticsView).setProgressIndicator(true);
@@ -115,7 +115,7 @@ public class StatisticsPresenterTest {
     @Test
     public void loadStatisticsWhenTasksAreUnavailable_CallErrorToDisplay() {
         // When statistics are loaded
-        mStatisticsPresenter.start();
+        mStatisticsPresenter.subscribe();
 
         // And tasks data isn't available
         verify(mTasksRepository).getTasks(mLoadTasksCallbackCaptor.capture());

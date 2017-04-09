@@ -2,6 +2,7 @@ package com.example.android.architecture.blueprints.todoapp.statistics;
 
 import com.example.android.architecture.blueprints.todoapp.ActivityScope;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepositoryComponent;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.ScheduleProviderCompoment;
 
 import dagger.Component;
 
@@ -10,7 +11,7 @@ import dagger.Component;
  */
 
 @ActivityScope
-@Component(dependencies = TasksRepositoryComponent.class, modules = StatisticsPresenterModule.class)
+@Component(dependencies = {TasksRepositoryComponent.class, ScheduleProviderCompoment.class}, modules = StatisticsPresenterModule.class)
 public interface StatisticsComponent {
     void inject(StatisticsActivity statisticsActivity);
 }

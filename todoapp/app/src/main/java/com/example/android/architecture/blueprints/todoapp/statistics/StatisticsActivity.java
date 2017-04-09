@@ -38,10 +38,9 @@ import javax.inject.Inject;
  */
 public class StatisticsActivity extends AppCompatActivity {
 
-    private DrawerLayout mDrawerLayout;
-
     @Inject
     StatisticsPresenter statisticsPresenter;
+    private DrawerLayout mDrawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +74,7 @@ public class StatisticsActivity extends AppCompatActivity {
 
         DaggerStatisticsComponent.builder()
                 .tasksRepositoryComponent(((ToDoApplication)getApplication()).getTasksRepositoryComponent())
+                .scheduleProviderCompoment(((ToDoApplication) getApplication()).getScheduleProviderCompoment())
                 .statisticsPresenterModule(new StatisticsPresenterModule(statisticsFragment))
                 .build()
                 .inject(this);

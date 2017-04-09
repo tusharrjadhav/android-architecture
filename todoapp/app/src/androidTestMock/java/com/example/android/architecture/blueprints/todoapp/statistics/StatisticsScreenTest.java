@@ -18,9 +18,9 @@ package com.example.android.architecture.blueprints.todoapp.statistics;
 
 import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.filters.LargeTest;
 
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.data.FakeTasksRemoteDataSource;
@@ -73,7 +73,7 @@ public class StatisticsScreenTest {
         FakeTasksRemoteDataSource.getInstance().addTasks(new Task("Title1", "", false));
         FakeTasksRemoteDataSource.getInstance().addTasks(new Task("Title2", "", true));
 
-        // Lazily start the Activity from the ActivityTestRule
+        // Lazily subscribe the Activity from the ActivityTestRule
         Intent startIntent = new Intent();
         mStatisticsActivityTestRule.launchActivity(startIntent);
     }

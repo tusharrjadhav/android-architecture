@@ -17,8 +17,8 @@
 package com.example.android.architecture.blueprints.todoapp.data;
 
 import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.filters.LargeTest;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.local.TasksDbHelper;
@@ -59,7 +59,7 @@ public class TasksLocalDataSourceTest {
     @Before
     public void setup() {
          mLocalDataSource = new TasksLocalDataSource(
-                 InstrumentationRegistry.getTargetContext());
+                 InstrumentationRegistry.getTargetContext(), schedulerProvider);
     }
 
     @After

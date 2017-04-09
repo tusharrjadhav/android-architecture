@@ -55,19 +55,31 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class TasksFragment extends Fragment implements TasksContract.View {
 
     private TasksContract.Presenter mPresenter;
+    /**
+     * Listener for clicks on tasks in the ListView.
+     */
+    TaskItemListener mItemListener = new TaskItemListener() {
+        @Override
+        public void onTaskClick(Task clickedTask) {
+            mPresenter.openTaskDetails(clickedTask);
+        }
 
+        @Override
+        public void onCompleteTaskClick(Task completedTask) {
+            mPresenter.completeTask(completedTask);
+        }
+
+        @Override
+        public void onActivateTaskClick(Task activatedTask) {
+            mPresenter.activateTask(activatedTask);
+        }
+    };
     private TasksAdapter mListAdapter;
-
     private View mNoTasksView;
-
     private ImageView mNoTaskIcon;
-
     private TextView mNoTaskMainView;
-
     private TextView mNoTaskAddView;
-
     private LinearLayout mTasksView;
-
     private TextView mFilteringLabelView;
 
     public TasksFragment() {
@@ -81,13 +93,19 @@ public class TasksFragment extends Fragment implements TasksContract.View {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mListAdapter = new TasksAdapter(new ArrayList<Task>(0), mItemListener);
+        mListAdapter = new TasksAdapter(new ArrayList<>(0), mItemListener);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        mPresenter.start();
+        mPresenter.subscribe();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mPresenter.unsubscribe();
     }
 
     @Override
@@ -206,26 +224,6 @@ public class TasksFragment extends Fragment implements TasksContract.View {
         popup.show();
     }
 
-    /**
-     * Listener for clicks on tasks in the ListView.
-     */
-    TaskItemListener mItemListener = new TaskItemListener() {
-        @Override
-        public void onTaskClick(Task clickedTask) {
-            mPresenter.openTaskDetails(clickedTask);
-        }
-
-        @Override
-        public void onCompleteTaskClick(Task completedTask) {
-            mPresenter.completeTask(completedTask);
-        }
-
-        @Override
-        public void onActivateTaskClick(Task activatedTask) {
-            mPresenter.activateTask(activatedTask);
-        }
-    };
-
     @Override
     public void setLoadingIndicator(final boolean active) {
 
@@ -289,7 +287,7 @@ public class TasksFragment extends Fragment implements TasksContract.View {
         mNoTasksView.setVisibility(View.VISIBLE);
 
         mNoTaskMainView.setText(mainText);
-        mNoTaskIcon.setImageDrawable(getResources().getDrawable(iconRes));
+        mNoTaskIcon.setImageDrawable(ContextCompat.getDrawable(getContext(), iconRes));
         mNoTaskAddView.setVisibility(showAddView ? View.VISIBLE : View.GONE);
     }
 
@@ -350,6 +348,15 @@ public class TasksFragment extends Fragment implements TasksContract.View {
     @Override
     public boolean isActive() {
         return isAdded();
+    }
+
+    public interface TaskItemListener {
+
+        void onTaskClick(Task clickedTask);
+
+        void onCompleteTaskClick(Task completedTask);
+
+        void onActivateTaskClick(Task activatedTask);
     }
 
     private static class TasksAdapter extends BaseAdapter {
@@ -431,15 +438,6 @@ public class TasksFragment extends Fragment implements TasksContract.View {
 
             return rowView;
         }
-    }
-
-    public interface TaskItemListener {
-
-        void onTaskClick(Task clickedTask);
-
-        void onCompleteTaskClick(Task completedTask);
-
-        void onActivateTaskClick(Task activatedTask);
     }
 
 }

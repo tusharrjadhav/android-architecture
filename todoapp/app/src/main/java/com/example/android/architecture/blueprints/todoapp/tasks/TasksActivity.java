@@ -39,10 +39,8 @@ import javax.inject.Inject;
 public class TasksActivity extends AppCompatActivity {
 
     private static final String CURRENT_FILTERING_KEY = "CURRENT_FILTERING_KEY";
-
-    private DrawerLayout mDrawerLayout;
-
     @Inject TasksPresenter mTasksPresenter;
+    private DrawerLayout mDrawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +74,7 @@ public class TasksActivity extends AppCompatActivity {
         // Create the presenter
         DaggerTasksComponent.builder()
                 .tasksRepositoryComponent(((ToDoApplication) getApplication()).getTasksRepositoryComponent())
+                .scheduleProviderCompoment(((ToDoApplication) getApplication()).getScheduleProviderCompoment())
                 .tasksPresenterModule(new TasksPresenterModule(tasksFragment))
                 .build()
                 .inject(this);

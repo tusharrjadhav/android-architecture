@@ -20,11 +20,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.example.android.architecture.blueprints.todoapp.data.Task;
-import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
 import com.google.common.base.Strings;
 
 import javax.inject.Inject;
+
+import rx.subscriptions.CompositeSubscription;
 
 /**
  * Listens to user actions from the UI ({@link TaskDetailFragment}), retrieves the data and updates
@@ -35,24 +38,34 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
     private final TasksRepository mTasksRepository;
 
     private final TaskDetailContract.View mTaskDetailView;
-
+    @NonNull
+    private final BaseSchedulerProvider mSchedulerProvider;
     @Nullable
     private String mTaskId;
+    @NonNull
+    private CompositeSubscription mSubscriptions;
 
     @Inject
     TaskDetailPresenter(@Nullable String taskId,
-                               TasksRepository tasksRepository,
-                               TaskDetailContract.View taskDetailView) {
+                        TasksRepository tasksRepository,
+                        TaskDetailContract.View taskDetailView,
+                        @NonNull CompositeSubscription mSubscriptions, SchedulerProvider schedulerProvider) {
         mTaskId = taskId;
         mTasksRepository = tasksRepository;
         mTaskDetailView = taskDetailView;
-
+        this.mSubscriptions = mSubscriptions;
+        mSchedulerProvider = schedulerProvider;
         mTaskDetailView.setPresenter(this);
     }
 
     @Override
-    public void start() {
+    public void subscribe() {
         openTask();
+    }
+
+    @Override
+    public void unsubscribe() {
+        mSubscriptions.clear();
     }
 
     private void openTask() {
@@ -62,30 +75,17 @@ public class TaskDetailPresenter implements TaskDetailContract.Presenter {
         }
 
         mTaskDetailView.setLoadingIndicator(true);
-        mTasksRepository.getTask(mTaskId, new TasksDataSource.GetTaskCallback() {
-            @Override
-            public void onTaskLoaded(Task task) {
-                // The view may not be able to handle UI updates anymore
-                if (!mTaskDetailView.isActive()) {
-                    return;
-                }
-                mTaskDetailView.setLoadingIndicator(false);
-                if (null == task) {
-                    mTaskDetailView.showMissingTask();
-                } else {
-                    showTask(task);
-                }
-            }
-
-            @Override
-            public void onDataNotAvailable() {
-                // The view may not be able to handle UI updates anymore
-                if (!mTaskDetailView.isActive()) {
-                    return;
-                }
-                mTaskDetailView.showMissingTask();
-            }
-        });
+        mTasksRepository.getTask(mTaskId)
+                .subscribeOn(mSchedulerProvider.computation())
+                .observeOn(mSchedulerProvider.ui())
+                .subscribe(
+                        //onNext
+                        this::showTask,
+                        //onError
+                        throwable -> {
+                        },
+                        // onCompleted
+                        () -> mTaskDetailView.setLoadingIndicator(false));
     }
 
     @Override

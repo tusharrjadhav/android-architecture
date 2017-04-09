@@ -18,9 +18,9 @@ package com.example.android.architecture.blueprints.todoapp.taskdetail;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.filters.LargeTest;
 
 import com.example.android.architecture.blueprints.todoapp.R;
 import com.example.android.architecture.blueprints.todoapp.TestUtils;
@@ -69,9 +69,9 @@ public class TaskDetailScreenTest {
      * blocks of Junit tests.
      *
      * <p>
-     * Sometimes an {@link Activity} requires a custom start {@link Intent} to receive data
-     * from the source Activity. ActivityTestRule has a feature which let's you lazily start the
-     * Activity under test, so you can control the Intent that is used to start the target Activity.
+     * Sometimes an {@link Activity} requires a custom subscribe {@link Intent} to receive data
+     * from the source Activity. ActivityTestRule has a feature which let's you lazily subscribe the
+     * Activity under test, so you can control the Intent that is used to subscribe the target Activity.
      */
     @Rule
     public ActivityTestRule<TaskDetailActivity> mTaskDetailActivityTestRule =
@@ -100,7 +100,7 @@ public class TaskDetailScreenTest {
         TasksRepository.destroyInstance();
         FakeTasksRemoteDataSource.getInstance().addTasks(task);
 
-        // Lazily start the Activity from the ActivityTestRule this time to inject the start Intent
+        // Lazily subscribe the Activity from the ActivityTestRule this time to inject the subscribe Intent
         Intent startIntent = new Intent();
         startIntent.putExtra(TaskDetailActivity.EXTRA_TASK_ID, task.getId());
         mTaskDetailActivityTestRule.launchActivity(startIntent);

@@ -1,12 +1,14 @@
 package com.example.android.architecture.blueprints.todoapp.statistics;
 
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.CompositeSubscriptionMdule;
+
 import dagger.Module;
 import dagger.Provides;
 
 /**
  * Created by Tushar_temp on 03/04/17.
  */
-@Module
+@Module(includes = CompositeSubscriptionMdule.class)
 public class StatisticsPresenterModule {
     StatisticsContract.View mStatisticsView;
 

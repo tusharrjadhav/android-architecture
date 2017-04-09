@@ -24,11 +24,16 @@ import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
 import com.example.android.architecture.blueprints.todoapp.util.EspressoIdlingResource;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import rx.Observable;
+import rx.Subscription;
+import rx.subscriptions.CompositeSubscription;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -42,21 +47,34 @@ public class TasksPresenter implements TasksContract.Presenter {
 
     private final TasksContract.View mTasksView;
 
+    @NonNull
+    private final BaseSchedulerProvider mSchedulerProvider;
+
+    @NonNull
     private TasksFilterType mCurrentFiltering = TasksFilterType.ALL_TASKS;
 
     private boolean mFirstLoad = true;
 
+    @NonNull
+    private CompositeSubscription mSubscriptions;
+
     @Inject
-    public TasksPresenter(TasksRepository tasksRepository, TasksContract.View tasksView) {
+    public TasksPresenter(TasksRepository tasksRepository, TasksContract.View tasksView, SchedulerProvider schedulerProvider, @NonNull CompositeSubscription mSubscriptions) {
         mTasksRepository = tasksRepository;
         mTasksView = tasksView;
-
+        this.mSubscriptions = mSubscriptions;
+        mSchedulerProvider = schedulerProvider;
         mTasksView.setPresenter(this);
     }
 
     @Override
-    public void start() {
+    public void subscribe() {
         loadTasks(false);
+    }
+
+    @Override
+    public void unsubscribe() {
+        mSubscriptions.clear();
     }
 
     @Override
@@ -90,60 +108,40 @@ public class TasksPresenter implements TasksContract.Presenter {
         // that the app is busy until the response is handled.
         EspressoIdlingResource.increment(); // App is busy until further notice
 
-        mTasksRepository.getTasks(new TasksDataSource.LoadTasksCallback() {
-            @Override
-            public void onTasksLoaded(List<Task> tasks) {
-                List<Task> tasksToShow = new ArrayList<Task>();
+        mSubscriptions.clear();
 
-                // This callback may be called twice, once for the cache and once for loading
-                // the data from the server API, so we check before decrementing, otherwise
-                // it throws "Counter has been corrupted!" exception.
-                if (!EspressoIdlingResource.getIdlingResource().isIdleNow()) {
-                    EspressoIdlingResource.decrement(); // Set app as idle.
-                }
-
-                // We filter the tasks based on the requestType
-                for (Task task : tasks) {
+        Subscription subscription = mTasksRepository.getTasks()
+                .flatMap(Observable::from)
+                .filter(task -> {
                     switch (mCurrentFiltering) {
-                        case ALL_TASKS:
-                            tasksToShow.add(task);
-                            break;
                         case ACTIVE_TASKS:
-                            if (task.isActive()) {
-                                tasksToShow.add(task);
-                            }
-                            break;
+                            return task.isActive();
                         case COMPLETED_TASKS:
-                            if (task.isCompleted()) {
-                                tasksToShow.add(task);
-                            }
-                            break;
+                            return task.isCompleted();
+                        case ALL_TASKS:
                         default:
-                            tasksToShow.add(task);
-                            break;
+                            return true;
                     }
-                }
-                // The view may not be able to handle UI updates anymore
-                if (!mTasksView.isActive()) {
-                    return;
-                }
-                if (showLoadingUI) {
-                    mTasksView.setLoadingIndicator(false);
-                }
-
-                processTasks(tasksToShow);
-            }
-
-            @Override
-            public void onDataNotAvailable() {
-                // The view may not be able to handle UI updates anymore
-                if (!mTasksView.isActive()) {
-                    return;
-                }
-                mTasksView.showLoadingTasksError();
-            }
-        });
+                })
+                .toList()
+                .subscribeOn(mSchedulerProvider.computation())
+                .observeOn(mSchedulerProvider.ui())
+                .doOnTerminate(() -> {
+                    if (!EspressoIdlingResource.getIdlingResource().isIdleNow()) {
+                        EspressoIdlingResource.decrement(); // Set app as idle.
+                    }
+                })
+                .subscribe(
+                        //onNext
+                        this::processTasks,
+                        //onError
+                        throwable -> mTasksView.showLoadingTasksError(),
+                        //onCompleted
+                        () -> mTasksView.setLoadingIndicator(false)
+                );
+        mSubscriptions.add(subscription);
     }
+
 
     private void processTasks(List<Task> tasks) {
         if (tasks.isEmpty()) {
@@ -219,6 +217,11 @@ public class TasksPresenter implements TasksContract.Presenter {
         loadTasks(false, false);
     }
 
+    @Override
+    public TasksFilterType getFiltering() {
+        return mCurrentFiltering;
+    }
+
     /**
      * Sets the current task filtering type.
      *
@@ -229,11 +232,6 @@ public class TasksPresenter implements TasksContract.Presenter {
     @Override
     public void setFiltering(TasksFilterType requestType) {
         mCurrentFiltering = requestType;
-    }
-
-    @Override
-    public TasksFilterType getFiltering() {
-        return mCurrentFiltering;
     }
 
 }

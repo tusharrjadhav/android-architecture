@@ -77,6 +77,7 @@ public class AddEditTaskActivity extends AppCompatActivity {
         DaggerAddEditTaskComponent.builder()
                 .tasksRepositoryComponent(((ToDoApplication) getApplication()).getTasksRepositoryComponent())
                 .addEditTaskPresenterModule(new AddEditTaskPresenterModule(addEditTaskFragment, taskId))
+                .scheduleProviderCompoment(((ToDoApplication) getApplication()).getScheduleProviderCompoment())
                 .build()
                 .inject(this);
         addEditTaskFragment.setPresenter(mAddEditTaskPresenter);

@@ -22,10 +22,12 @@ import android.support.annotation.Nullable;
 import com.example.android.architecture.blueprints.todoapp.data.Task;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksDataSource;
 import com.example.android.architecture.blueprints.todoapp.data.source.TasksRepository;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.BaseSchedulerProvider;
+import com.example.android.architecture.blueprints.todoapp.util.schedulers.SchedulerProvider;
 
 import javax.inject.Inject;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import rx.subscriptions.CompositeSubscription;
 
 /**
  * Listens to user actions from the UI ({@link AddEditTaskFragment}), retrieves the data and
@@ -40,8 +42,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * therefore, to ensure the developer doesn't instantiate the class manually bypassing Dagger,
  * it's good practice minimise the visibility of the class/constructor as much as possible.
  */
-final class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
-        TasksDataSource.GetTaskCallback {
+final class AddEditTaskPresenter implements AddEditTaskContract.Presenter {
 
     @NonNull
     private final TasksDataSource mTasksRepository;
@@ -49,29 +50,42 @@ final class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
     @NonNull
     private final AddEditTaskContract.View mAddTaskView;
 
+    @NonNull
+    private final BaseSchedulerProvider mSchedulerProvider;
+
     @Nullable
     private String mTaskId;
 
+    @NonNull
+    private CompositeSubscription mSubscriptions;
 
     /**
      * Creates a presenter for the add/edit view.
-     *  @param taskId ID of the task to edit or null for a new task
+     * @param taskId ID of the task to edit or null for a new task
      * @param tasksRepository a repository of data for tasks
      * @param addTaskView the add/edit view
+     * @param mSubscriptions
      */
     @Inject
     public AddEditTaskPresenter(@Nullable String taskId, TasksRepository tasksRepository,
-                         AddEditTaskContract.View addTaskView) {
+                                AddEditTaskContract.View addTaskView, SchedulerProvider schedulerProvider, @NonNull CompositeSubscription mSubscriptions) {
         mTaskId = taskId;
-        mTasksRepository = checkNotNull(tasksRepository);
-        mAddTaskView = checkNotNull(addTaskView);
+        mTasksRepository = tasksRepository;
+        mAddTaskView = addTaskView;
+        mSchedulerProvider = schedulerProvider;
+        this.mSubscriptions = mSubscriptions;
     }
 
     @Override
-    public void start() {
+    public void subscribe() {
         if (!isNewTask()) {
             populateTask();
         }
+    }
+
+    @Override
+    public void unsubscribe() {
+        mSubscriptions.clear();
     }
 
     @Override
@@ -88,24 +102,21 @@ final class AddEditTaskPresenter implements AddEditTaskContract.Presenter,
         if (isNewTask()) {
             throw new RuntimeException("populateTask() was called but task is new.");
         }
-        mTasksRepository.getTask(mTaskId, this);
-    }
+        mSubscriptions.add(mTasksRepository.getTask(mTaskId)
+                .subscribeOn(mSchedulerProvider.computation())
+                .observeOn(mSchedulerProvider.ui())
+                .subscribe(task -> {
+                            if (mAddTaskView.isActive()) {
+                                mAddTaskView.setTitle(task.getTitle());
+                                mAddTaskView.setDescription(task.getDescription());
 
-    @Override
-    public void onTaskLoaded(Task task) {
-        // The view may not be able to handle UI updates anymore
-        if (mAddTaskView.isActive()) {
-            mAddTaskView.setTitle(task.getTitle());
-            mAddTaskView.setDescription(task.getDescription());
-        }
-    }
-
-    @Override
-    public void onDataNotAvailable() {
-        // The view may not be able to handle UI updates anymore
-        if (mAddTaskView.isActive()) {
-            mAddTaskView.showEmptyTaskError();
-        }
+                            }
+                        }, // onError
+                        __ -> {
+                            if (mAddTaskView.isActive()) {
+                                mAddTaskView.showEmptyTaskError();
+                            }
+                        }));
     }
 
     private boolean isNewTask() {
