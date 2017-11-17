@@ -13,9 +13,6 @@ android {
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
 
-        jackOptions {
-            enabled true
-        }
     }
 
     compileOptions {
@@ -41,13 +38,16 @@ android {
         }
     }
 
+    // Specifies a flavor dimension.
+    flavorDimensions "dev"
     // If you need to add more flavors, consider using flavor dimensions.
     productFlavors {
         mock {
             applicationIdSuffix = ".mock"
+            dimension "dev"
         }
         prod {
-
+            dimension "dev"
         }
     }
 
